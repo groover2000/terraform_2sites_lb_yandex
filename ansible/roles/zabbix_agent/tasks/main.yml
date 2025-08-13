@@ -1,0 +1,41 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for zabbix_agent
+
+## Вроде норм, но  как-то странно 
+- name: Install Zabbix repo
+  apt:
+    deb: "https://repo.zabbix.com/zabbix/{{ zabbix_version }}/ubuntu/pool/main/z/zabbix-release/zabbix-release_{{ zabbix_version }}-1+ubuntu22.04_all.deb"
+    state: present
+  vars:
+    zabbix_version: "{{ zabbix_version | default('7.0') }}"
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install Zabbix Agent
+  apt:
+    name: zabbix-agent
+    state: present
+
+- name: Configure Zabbix Agent (passive)
+  lineinfile:
+    path: /etc/zabbix/zabbix_agentd.conf
+    regexp: '^Server='
+    line: "Server={{ zabbix_server_ip }}"
+  notify: restart zabbix agent
+
+- name: Configure Zabbix Agent (active)
+  lineinfile:
+    path: /etc/zabbix/zabbix_agentd.conf
+    regexp: '^ServerActive='
+    line: "ServerActive={{ zabbix_server_ip }}"
+  notify: restart zabbix agent
+
+- name: Set Hostname
+  lineinfile:
+    path: /etc/zabbix/zabbix_agentd.conf
+    regexp: '^Hostname='
+    line: "Hostname={{ inventory_hostname }}"
+  notify: restart zabbix agent

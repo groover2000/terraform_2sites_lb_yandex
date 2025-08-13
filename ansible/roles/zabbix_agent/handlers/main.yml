@@ -1,0 +1,7 @@
+#SPDX-License-Identifier: MIT-0
+---
+# handlers file for zabbix_agent
+- name: restart zabbix agent
+  service:
+    name: zabbix-agent
+    state: restarted

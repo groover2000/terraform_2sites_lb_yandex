@@ -1,0 +1,131 @@
+---
+- name: Установка Zabbix-сервера на Ubuntu 22.04
+  hosts: test  
+  become: true
+  vars:
+    zabbix_version: "7.0"  
+    zabbix_db_name: zabbix
+    zabbix_db_user: zabbix
+    zabbix_db_password: "МОЖНО СДЕЛАТЬ ХЭШОМ ЧЕРЗ VAULT" 
+    zabbix_server_hostname: "zabbix_server"
+    timezone: "Europe/Moscow"  
+    php_version: "8.1"  
+
+  pre_tasks:
+    - name: Обновление кэша apt
+      apt:
+        update_cache: yes
+
+    - name: Установка PostgreSQL и PHP-FPM
+      apt:
+        name:
+          - postgresql
+          - postgresql-contrib
+          - python3-psycopg2  # Для модулей Ansible PostgreSQL 
+          - php{{ php_version }}-fpm
+          - php{{ php_version }}-pgsql  # Для поддержки PostgreSQL в PHP
+        state: present
+
+    - name: Запуск PostgreSQL
+      service:
+        name: postgresql
+        state: started
+        enabled: yes
+
+    - name: Запуск PHP-FPM
+      service:
+        name: php{{ php_version }}-fpm
+        state: started
+        enabled: yes
+
+    - name: Поиск пути к pg_hba.conf
+      find:
+        paths: /etc/postgresql
+        patterns: "pg_hba.conf"
+        recurse: yes
+      register: pg_hba_file
+
+    - name: Проверка и настройка метода аутентификации в pg_hba.conf (IPv4) ## Без этого отвергает подключение к пользователю, надо включать md5 или я что-то не понял
+      lineinfile:
+        path: "{{ pg_hba_file.files[0].path | default('/etc/postgresql/14/main/pg_hba.conf') }}"
+        regexp: '^host\s+all\s+all\s+127\.0\.0\.1/32\s+.*'
+        line: 'host    all             all             127.0.0.1/32            md5'
+        backup: yes
+      notify: Restart PostgreSQL
+
+    - name: Проверка и настройка метода аутентификации в pg_hba.conf (IPv6) ## за компанию верхнего
+      lineinfile:
+        path: "{{ pg_hba_file.files[0].path | default('/etc/postgresql/14/main/pg_hba.conf') }}"
+        regexp: '^host\s+all\s+all\s+::1/128\s+.*'
+        line: 'host    all             all             ::1/128                 md5'
+        backup: yes
+      notify: Restart PostgreSQL
+
+    - name: Создание пользователя базы данных Zabbix
+      community.postgresql.postgresql_user:
+        name: "{{ zabbix_db_user }}"
+        password: "{{ zabbix_db_password }}"
+        state: present
+        encrypted: yes
+      become: yes
+      become_user: postgres
+
+    - name: Создание базы данных Zabbix
+      community.postgresql.postgresql_db:
+        name: "{{ zabbix_db_name }}"
+        owner: "{{ zabbix_db_user }}"
+        state: present
+        encoding: UTF-8
+      become: yes
+      become_user: postgres
+
+  roles:
+    - role: community.zabbix.zabbix_repo
+
+    - role: community.zabbix.zabbix_server
+      zabbix_server_database: pgsql
+      zabbix_server_dbhost: localhost
+      zabbix_server_dbname: "{{ zabbix_db_name }}"
+      zabbix_server_dbuser: "{{ zabbix_db_user }}"
+      zabbix_server_dbpassword: "{{ zabbix_db_password }}"
+      zabbix_server_load_schema: true
+      zabbix_version: "{{ zabbix_version }}"
+
+    - role: community.zabbix.zabbix_web
+      zabbix_web_http_server: apache 
+      zabbix_web_database: pgsql
+      zabbix_web_dbhost: localhost
+      zabbix_web_dbname: "{{ zabbix_db_name }}"
+      zabbix_web_dbuser: "{{ zabbix_db_user }}"
+      zabbix_web_dbpassword: "{{ zabbix_db_password }}"
+      zabbix_server_host: localhost
+      zabbix_timezone: "{{ timezone }}"
+      zabbix_version: "{{ zabbix_version }}"
+      zabbix_web_php_version: "{{ php_version }}"
+
+    - role: community.zabbix.zabbix_agent  
+      zabbix_agent_server: 127.0.0.1
+      zabbix_agent_serveractive: 127.0.0.1
+      zabbix_version: "{{ zabbix_version }}"
+
+  post_tasks:
+    - name: Проверка запуска сервисов
+      service:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      loop:
+        - zabbix-server
+        - zabbix-agent
+        - apache2  
+        - php{{ php_version }}-fpm
+
+  handlers:
+    - name: Restart PostgreSQL
+      service:
+        name: postgresql
+        state: restarted
+
+  collections:
+    - community.zabbix
+    - community.postgresql

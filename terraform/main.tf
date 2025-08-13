@@ -1,152 +1,8 @@
-
 provider "yandex" {
 
-}
-
-
-# Группы доступности для виртуалок
-
-# Группа для бастиона
-resource "yandex_vpc_security_group" "bastion-sg" {
-  name        = "bastion-sg"
-  description = "Группа для бастион сервера"
-  network_id  = yandex_vpc_network.loshadka.id
-}
-
-# Группа для сайтов
-resource "yandex_vpc_security_group" "web-sg" {
-  name        = "web-sg"
-  description = "Группа для для сайтов"
-  network_id  = yandex_vpc_network.loshadka.id
-}
-
-# Разрешает входящий ssh для бастиона
-resource "yandex_vpc_security_group_rule" "ssh-rule-inbound" {
-
-  security_group_binding = yandex_vpc_security_group.bastion-sg.id
-  direction              = "ingress"
-  description            = "Разрешает входящий ssh"
-  protocol               = "ANY"
-  from_port = 0
-  to_port = 10000
-  v4_cidr_blocks         = ["0.0.0.0/0"]
+  folder_id = "b1ggikaja1av3posr20i"
 
 }
-
-resource "yandex_vpc_security_group_rule" "ssh-rule-outbound" {
-
-  security_group_binding = yandex_vpc_security_group.bastion-sg.id
-  direction              = "egress"
-  description            = "Разрешает входящий ssh"
-  protocol               = "ANY"
-  from_port = 0
-  to_port = 10000
-  v4_cidr_blocks         = ["0.0.0.0/0"]
-
-}
-
-# Разрешает ssh для сайтов от бастиона
-resource "yandex_vpc_security_group_rule" "ssh-rule-web-inbound" {
-
-  security_group_binding = yandex_vpc_security_group.web-sg.id
-  direction              = "ingress"
-  description            = "Разрешает входящий ssh для web сайтов только с бастион сервера"
-  protocol               = "TCP"
-  port                   = 22
-  v4_cidr_blocks         = ["192.168.1.0/24","192.168.2.0/24"]
-
-}
-resource "yandex_vpc_security_group_rule" "ssh-rule-web-outbound" {
-
-  security_group_binding = yandex_vpc_security_group.web-sg.id
-  direction              = "ingress"
-  description            = "Разрешает входящий ssh для web сайтов только с бастион сервера"
-  protocol               = "TCP"
-  port                   = 22
-  v4_cidr_blocks         = ["192.168.1.0/24","192.168.2.0/24"]
-
-}
-# Разрешает http трафик для сайтов
-resource "yandex_vpc_security_group_rule" "web-http-inbound" {
-
-  security_group_binding = yandex_vpc_security_group.web-sg.id
-  direction              = "ingress"
-  description            = "Разрешает входящий http трафик"
-  protocol               = "TCP"
-  port                   = 80
-  v4_cidr_blocks         = ["0.0.0.0/0"]
-
-}
-resource "yandex_vpc_security_group_rule" "web-http-outbound" {
-
-  security_group_binding = yandex_vpc_security_group.web-sg.id
-  direction              = "egress"
-  description            = "Разрешает входящий http трафик"
-  protocol               = "TCP"
-  port                   = 80
-  v4_cidr_blocks         = ["0.0.0.0/0"]
-
-}
-
-# Группы доступности для виртуалок
-
-
-# Сеть для виртуалок
-
-resource "yandex_vpc_network" "loshadka" {
-  name        = "loshadka"
-  description = "Локалка для сайтов"
-}
-
-resource "yandex_vpc_subnet" "public-1" {
-  name           = "public-1"
-  zone           = "ru-central1-a"
-  network_id     = yandex_vpc_network.loshadka.id
-  v4_cidr_blocks = ["192.168.1.0/24"]
-}
-
-resource "yandex_vpc_subnet" "public-2" {
-  name           = "public-2"
-  zone           = "ru-central1-b"
-  network_id     = yandex_vpc_network.loshadka.id
-  v4_cidr_blocks = ["192.168.2.0/24"]
-}
-
-resource "yandex_vpc_subnet" "private-1" {
-  name           = "private-1"
-  zone           = "ru-central1-a"
-  network_id     = yandex_vpc_network.loshadka.id
-  v4_cidr_blocks = ["192.168.10.0/24"]
-  route_table_id = yandex_vpc_route_table.private-rt.id
-}
-
-resource "yandex_vpc_subnet" "private-2" {
-  name           = "private-2"
-  zone           = "ru-central1-b"
-  network_id     = yandex_vpc_network.loshadka.id
-  v4_cidr_blocks = ["192.168.11.0/24"]
-  route_table_id = yandex_vpc_route_table.private-rt.id
-}
-
-# NAT для выхода наружу, чтобы виртуалки могли качать пакеты
-resource "yandex_vpc_gateway" "nat" {
-  name = "nat-gw"
-  shared_egress_gateway {}
-}
-
-resource "yandex_vpc_route_table" "private-rt" {
-  network_id = yandex_vpc_network.loshadka.id
-
-  static_route {
-    destination_prefix = "0.0.0.0/0"
-    gateway_id         = yandex_vpc_gateway.nat.id
-  }
-}
-
-
-
-# Сеть для виртуалок
-
 
 # Бастион инстанс 
 
@@ -156,6 +12,7 @@ data "yandex_compute_image" "ubuntu" {
 
 resource "yandex_compute_instance" "bastion" {
   name        = "bastion"
+  hostname    = "bastion"
   platform_id = "standard-v1"
   zone        = "ru-central1-a"
 
@@ -219,7 +76,7 @@ resource "yandex_compute_instance" "site" {
   }
 
   metadata = {
-    ssh-keys = "ubuntu:${file("~/.ssh/id_rsa.pub")}"
+    ssh-keys  = "ubuntu:${file("~/.ssh/id_rsa.pub")}"
     user-data = <<-EOF
                 #cloud-config
                 package_update: true
@@ -235,6 +92,112 @@ resource "yandex_compute_instance" "site" {
 }
 
 #Web инстанс
+
+# Zabbix
+resource "yandex_compute_instance" "zabbix" {
+  name        = "zabbix"
+  hostname    = "zabbix"
+  platform_id = "standard-v1"
+  zone        = "ru-central1-a"
+
+  resources {
+    cores  = 2
+    memory = 2
+  }
+
+  scheduling_policy {
+    preemptible = true
+  }
+
+  boot_disk {
+    initialize_params {
+      image_id = data.yandex_compute_image.ubuntu.id
+      size     = 10
+    }
+  }
+
+  network_interface {
+    subnet_id          = yandex_vpc_subnet.public-1.id
+    nat                = true
+    security_group_ids = [yandex_vpc_security_group.zabbix-sg.id]
+  }
+
+  metadata = {
+    ssh-keys = "ubuntu:${file("~/.ssh/id_rsa.pub")}"
+  }
+}
+
+# Zabbix
+
+# Elasticsearch
+# resource "yandex_compute_instance" "elc" {
+#   name        = "ecl"
+#   platform_id = "standard-v1"
+#   zone        = "ru-central1-a"
+
+#   resources {
+#     cores  = 2
+#     memory = 2
+#   }
+
+#   scheduling_policy {
+#     preemptible = true
+#   }
+
+#   boot_disk {
+#     initialize_params {
+#       image_id = data.yandex_compute_image.ubuntu.id
+#       size     = 10
+#     }
+#   }
+
+#   network_interface {
+#     subnet_id          = yandex_vpc_subnet.private-1.id
+#     nat                = false
+#     security_group_ids = [yandex_vpc_security_group.elc-sg.id]
+#   }
+
+#   metadata = {
+#     ssh-keys = "ubuntu:${file("~/.ssh/id_rsa.pub")}"
+#   }
+# }
+# Elasticsearch
+
+#Kibana
+# resource "yandex_compute_instance" "kibana" {
+#   name        = "ecl"
+#   platform_id = "standard-v1"
+#   zone        = "ru-central1-a"
+
+#   resources {
+#     cores  = 2
+#     memory = 2
+#   }
+
+#   scheduling_policy {
+#     preemptible = true
+#   }
+
+#   boot_disk {
+#     initialize_params {
+#       image_id = data.yandex_compute_image.ubuntu.id
+#       size     = 10
+#     }
+#   }
+
+#   network_interface {
+#     subnet_id          = yandex_vpc_subnet.public-1.id
+#     nat                = true
+#     security_group_ids = [yandex_vpc_security_group.kibana-sg.id]
+#   }
+
+#   metadata = {
+#     ssh-keys = "ubuntu:${file("~/.ssh/id_rsa.pub")}"
+#   }
+# }
+#Kibana
+
+
 
 
 # Балансировщик
@@ -329,7 +292,7 @@ resource "yandex_alb_load_balancer" "balancer" {
 
 
 # Оутпутсы
-# Outputs we need for Ansible
+
 output "bastion_public_ip" {
   value = yandex_compute_instance.bastion.network_interface[0].nat_ip_address
 }
