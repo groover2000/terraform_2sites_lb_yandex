@@ -31,7 +31,7 @@ resource "yandex_vpc_security_group" "elc-sg" {
 # Группа kibana
 resource "yandex_vpc_security_group" "kibana-sg" {
   name        = "kibana-sg"
-  description = "Группа для elc"
+  description = "Группа для kibana"
   network_id  = yandex_vpc_network.loshadka.id
 }
 

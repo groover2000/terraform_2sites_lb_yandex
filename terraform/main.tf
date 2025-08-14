@@ -22,7 +22,7 @@ resource "yandex_compute_instance" "bastion" {
   }
 
   scheduling_policy {
-    preemptible = true
+    preemptible = false
   }
 
   boot_disk {
@@ -59,7 +59,7 @@ resource "yandex_compute_instance" "site" {
   }
 
   scheduling_policy {
-    preemptible = true
+    preemptible = false
   }
 
   boot_disk {
@@ -106,7 +106,7 @@ resource "yandex_compute_instance" "zabbix" {
   }
 
   scheduling_policy {
-    preemptible = true
+    preemptible = false
   }
 
   boot_disk {
@@ -129,72 +129,74 @@ resource "yandex_compute_instance" "zabbix" {
 
 # Zabbix
 
-# Elasticsearch
-# resource "yandex_compute_instance" "elc" {
-#   name        = "ecl"
-#   platform_id = "standard-v1"
-#   zone        = "ru-central1-a"
+#Elasticsearch
+resource "yandex_compute_instance" "elastic" {
+  name        = "elastic"
+  hostname    = "elastic"
+  platform_id = "standard-v1"
+  zone        = "ru-central1-a"
 
-#   resources {
-#     cores  = 2
-#     memory = 2
-#   }
+  resources {
+    cores  = 2
+    memory = 2
+  }
 
-#   scheduling_policy {
-#     preemptible = true
-#   }
+  scheduling_policy {
+    preemptible = false
+  }
 
-#   boot_disk {
-#     initialize_params {
-#       image_id = data.yandex_compute_image.ubuntu.id
-#       size     = 10
-#     }
-#   }
+  boot_disk {
+    initialize_params {
+      image_id = data.yandex_compute_image.ubuntu.id
+      size     = 10
+    }
+  }
 
-#   network_interface {
-#     subnet_id          = yandex_vpc_subnet.private-1.id
-#     nat                = false
-#     security_group_ids = [yandex_vpc_security_group.elc-sg.id]
-#   }
+  network_interface {
+    subnet_id          = yandex_vpc_subnet.private-1.id
+    nat                = false
+    security_group_ids = [yandex_vpc_security_group.elc-sg.id]
+  }
 
-#   metadata = {
-#     ssh-keys = "ubuntu:${file("~/.ssh/id_rsa.pub")}"
-#   }
-# }
-# Elasticsearch
+  metadata = {
+    ssh-keys = "ubuntu:${file("~/.ssh/id_rsa.pub")}"
+  }
+}
+#Elasticsearch
 
 #Kibana
-# resource "yandex_compute_instance" "kibana" {
-#   name        = "ecl"
-#   platform_id = "standard-v1"
-#   zone        = "ru-central1-a"
+resource "yandex_compute_instance" "kibana" {
+  name        = "kibana"
+  hostname    = "kibana"
+  platform_id = "standard-v1"
+  zone        = "ru-central1-a"
 
-#   resources {
-#     cores  = 2
-#     memory = 2
-#   }
+  resources {
+    cores  = 2
+    memory = 2
+  }
 
-#   scheduling_policy {
-#     preemptible = true
-#   }
+  scheduling_policy {
+    preemptible = false
+  }
 
-#   boot_disk {
-#     initialize_params {
-#       image_id = data.yandex_compute_image.ubuntu.id
-#       size     = 10
-#     }
-#   }
+  boot_disk {
+    initialize_params {
+      image_id = data.yandex_compute_image.ubuntu.id
+      size     = 10
+    }
+  }
 
-#   network_interface {
-#     subnet_id          = yandex_vpc_subnet.public-1.id
-#     nat                = true
-#     security_group_ids = [yandex_vpc_security_group.kibana-sg.id]
-#   }
+  network_interface {
+    subnet_id          = yandex_vpc_subnet.public-1.id
+    nat                = true
+    security_group_ids = [yandex_vpc_security_group.kibana-sg.id]
+  }
 
-#   metadata = {
-#     ssh-keys = "ubuntu:${file("~/.ssh/id_rsa.pub")}"
-#   }
-# }
+  metadata = {
+    ssh-keys = "ubuntu:${file("~/.ssh/id_rsa.pub")}"
+  }
+}
 #Kibana
 
 
@@ -307,3 +309,17 @@ output "alb_ip" {
   value       = yandex_alb_load_balancer.balancer.listener[0].endpoint[0].address[0].external_ipv4_address
   description = "External IP of ALB"
 }
+
+
+
+# resource "yandex_compute_snapshot_schedule" "daily_snapshots" {
+  
+#   name        = "daily-snapshots"
+#   description = "snapshoooots"
+#   retention_period = "160h"
+
+#   schedule_policy {
+#     expression = "0 0 ? * *"
+#   }
+#    disk_ids = ["yandex_compute_instance.bastion.boot_disk","yandex_compute_instance.zabbix.boot_disk","yandex_compute_instance.elastic.boot_disk","yandex_compute_instance.zabbix.boot_disk","yandex_compute_instance.kibana.boot_disk"]
+# }

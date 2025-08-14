@@ -203,3 +203,59 @@ resource "yandex_vpc_security_group_rule" "zabbix-trapper-outbound" {
 }
 #---------------------------------
 # Zabbix-trapper
+
+
+
+
+#KIBANA
+
+resource "yandex_vpc_security_group_rule" "kibana-outbound" {
+
+  security_group_binding = yandex_vpc_security_group.kibana-sg.id
+  direction              = "egress"
+  description            = "ALL egress"
+  protocol               = "ANY"
+  from_port              = 0
+  to_port                = 65535
+  v4_cidr_blocks         = ["0.0.0.0/0"]
+
+}
+resource "yandex_vpc_security_group_rule" "kibana-inbound" {
+
+  security_group_binding = yandex_vpc_security_group.kibana-sg.id
+  direction              = "ingress"
+  description            = "ALL ingress"
+  protocol               = "ANY"
+  from_port              = 0
+  to_port                = 65535
+  v4_cidr_blocks         = ["0.0.0.0/0"]
+
+}
+
+#KIBANA
+
+
+# ELASTIC
+resource "yandex_vpc_security_group_rule" "elastic-outbound" {
+
+  security_group_binding = yandex_vpc_security_group.elc-sg.id
+  direction              = "egress"
+  description            = "ALL egress"
+  protocol               = "ANY"
+  from_port              = 0
+  to_port                = 65535
+  v4_cidr_blocks         = ["0.0.0.0/0"]
+
+}
+resource "yandex_vpc_security_group_rule" "elastic-intbound" {
+
+  security_group_binding = yandex_vpc_security_group.elc-sg.id
+  direction              = "ingress"
+  description            = "ALL ingress"
+  protocol               = "ANY"
+  from_port              = 0
+  to_port                = 65535
+  v4_cidr_blocks         = ["0.0.0.0/0"]
+
+}
+# ELASTIC

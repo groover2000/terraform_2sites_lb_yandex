@@ -1,0 +1,39 @@
+---
+
+- name: Установка Filebeat
+  hosts: web
+  become: yes
+  tasks:
+    - name: Добавляет репо ##Оказывается нету кибаны в этой убунте
+      apt_repository:
+        repo: "deb [trusted=yes] https://mirror.yandex.ru/mirrors/elastic/8/ stable main" ## Пусть будет ключей, верим яндексу
+        filename: "elactic-7-yandex"
+    - name: Обновить пакеты
+      apt:
+        update_cache: yes
+        
+    - name: Установить Filebeat
+      apt:
+        name: filebeat
+        state: present
+
+    # - name: Настроить Filebeat для отправки в Elasticsearch
+    #   copy:
+    #     dest: /etc/filebeat/filebeat.yml
+    #     content: |
+    #       filebeat.inputs:
+    #       - type: log
+    #         paths:
+    #           - /var/log/*.log
+
+    #       output.elasticsearch:
+    #         hosts: ["https://{{ kibana_host }}:{{ elastic_port }}"]
+    #         username: elastic
+    #         password: "{{ lookup('file', elastic_password_file) }}"
+    #         ssl.certificate_authorities: ["{{ elastic_key }}"]
+
+    - name: Включить и запустить Filebeat
+      systemd:
+        name: filebeat
+        state: started
+        enabled: yes

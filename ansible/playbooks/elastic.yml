@@ -1,0 +1,93 @@
+---
+
+- name: Добавление зеркала яндекса в репозитории
+  hosts: elastic
+  become: yes
+  vars:
+    elastic_key: /etc/elasticsearch/certs/http_ca.crt
+    elastic_password_file: /root/elastic-password.txt
+  tasks:
+   - name: Добавляет репо
+     apt_repository:
+      repo: "deb [trusted=yes] https://mirror.yandex.ru/mirrors/elastic/8/ stable main" ## Пусть будет ключей, верим яндексу
+      filename: "elactic-7-yandex"
+   
+   - name: Обновить пакеты
+     apt:
+      update_cache: yes
+
+   - name: Установить Elasticsearch
+     apt:
+      name: elasticsearch
+      state: present
+
+   - name: Автозапуск +  включение 
+     systemd:
+      name: elasticsearch
+      state: started
+      enabled: yes
+
+   - name: Ждать пока запустится порт 
+     wait_for:
+      port: 9200
+      delay: 10
+      timeout: 60
+
+   - name: Сбросить пароль elastic
+     command: /usr/share/elasticsearch/bin/elasticsearch-reset-password -u elastic -b
+     register: reset_pwd
+     changed_when: "'New value' in reset_pwd.stdout"
+
+   - name: Сохранить пароль в файл
+     copy:
+      content: "{{ reset_pwd.stdout }}"
+      dest: "{{ elastic_password_file }}"
+      owner: root
+      group: root
+      mode: '0600'
+
+   - name: Проверить состояние кластера
+     command: >
+        curl -u elastic:{{ reset_pwd.stdout_lines[-1] }}
+        --cacert {{ elastic_key }}
+        https://localhost:9200/_cluster/health?pretty
+     register: cluster_health
+     changed_when: false
+     ##ВЫВЕСТИ ТОКЕН ДЛЯ КИБАНЫ
+
+   - name: Показать статус кластера
+     debug:
+        msg: |
+         "{{ cluster_health.stdout }}"
+         "{{ reset_pwd.stdout }}"
+     
+# - name: Установка Filebeat
+#   hosts: web
+#   become: yes
+#   tasks:
+#     - name: Установить Filebeat
+#       apt:
+#         name: filebeat
+#         state: present
+
+#     - name: Настроить Filebeat для отправки в Elasticsearch
+#       copy:
+#         dest: /etc/filebeat/filebeat.yml
+#         content: |
+#           filebeat.inputs:
+#           - type: log
+#             paths:
+#               - var/log/nginx/access.log
+
+#           output.elasticsearch:
+#             hosts: ["https://{{ kibana_host }}:{{ elastic_port }}"]
+#             username: elastic
+#             password: "{{ lookup('file', elastic_password_file) }}"
+#             ssl.certificate_authorities: ["{{ elastic_key }}"]
+
+#     - name: Включить и запустить Filebeat
+#       systemd:
+#         name: filebeat
+#         state: started
+#         enabled: yes    
+        
