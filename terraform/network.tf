@@ -12,12 +12,12 @@ resource "yandex_vpc_subnet" "public-1" {
   v4_cidr_blocks = ["192.168.1.0/24"]
 }
 ## Лишняя, а может пока и нет
-resource "yandex_vpc_subnet" "public-2" {
-  name           = "public-2"
-  zone           = "ru-central1-b"
-  network_id     = yandex_vpc_network.loshadka.id
-  v4_cidr_blocks = ["192.168.2.0/24"]
-}
+# resource "yandex_vpc_subnet" "public-2" {
+#   name           = "public-2"
+#   zone           = "ru-central1-b"
+#   network_id     = yandex_vpc_network.loshadka.id
+#   v4_cidr_blocks = ["192.168.2.0/24"]
+# }
 
 resource "yandex_vpc_subnet" "private-1" {
   name           = "private-1"

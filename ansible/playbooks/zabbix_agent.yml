@@ -4,7 +4,8 @@
   become: true
   vars:
     zabbix_version: "6.0"
-  pre_tasks:
+    zabbix_server: "zabbix" ## По имени в конфиг для подключения
+    zabbix_agent_hostname: "{{ inventory_hostname }}" ## hostname из претасков фнсибла 
   roles:
     - role: community.zabbix.zabbix_repo
     - role: community.zabbix.zabbix_agent

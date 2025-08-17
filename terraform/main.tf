@@ -1,6 +1,8 @@
 provider "yandex" {
 
+  cloud_id  = "b1gtl02rft416pjn5e52"
   folder_id = "b1ggikaja1av3posr20i"
+
 
 }
 
@@ -72,7 +74,7 @@ resource "yandex_compute_instance" "site" {
   network_interface {
     subnet_id          = count.index == 0 ? yandex_vpc_subnet.private-1.id : yandex_vpc_subnet.private-2.id
     nat                = false
-    security_group_ids = [yandex_vpc_security_group.web-sg.id]
+    security_group_ids = [yandex_vpc_security_group.web-sg.id, yandex_vpc_security_group.zabbix-sg,yandex_vpc_security_group.elc-sg]
   }
 
   metadata = {
@@ -312,14 +314,25 @@ output "alb_ip" {
 
 
 
-# resource "yandex_compute_snapshot_schedule" "daily_snapshots" {
-  
-#   name        = "daily-snapshots"
-#   description = "snapshoooots"
-#   retention_period = "160h"
 
-#   schedule_policy {
-#     expression = "0 0 ? * *"
-#   }
-#    disk_ids = ["yandex_compute_instance.bastion.boot_disk","yandex_compute_instance.zabbix.boot_disk","yandex_compute_instance.elastic.boot_disk","yandex_compute_instance.zabbix.boot_disk","yandex_compute_instance.kibana.boot_disk"]
-# }
+
+## ДОБАВЛЕНО
+## Снапщоты дисков через terraform без массива и форич
+
+resource "yandex_compute_snapshot_schedule" "default" {  
+  name = "my-name"  
+  retention_period = "160h"
+  schedule_policy {  
+    expression = "0 0 ? * *"  
+  }  
+  snapshot_count = 1  
+  snapshot_spec {  
+    description = "snapshot-description"  
+    labels = {  
+      snapshot-label = "my-snapshot-label-value"  
+    }  
+  }  
+  disk_ids = [yandex_compute_instance.bastion.boot_disk[0].disk_id, yandex_compute_instance.zabbix.boot_disk[0].disk_id, yandex_compute_instance.elastic.boot_disk[0].disk_id, yandex_compute_instance.zabbix.boot_disk[0].disk_id, yandex_compute_instance.kibana.boot_disk[0].disk_id]  
+}  
+
+

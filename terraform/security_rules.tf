@@ -72,16 +72,16 @@ resource "yandex_vpc_security_group_rule" "web-http-inbound" {
   v4_cidr_blocks         = ["0.0.0.0/0"]
 
 }
-resource "yandex_vpc_security_group_rule" "web-http-outbound" {
+# resource "yandex_vpc_security_group_rule" "web-http-outbound" {
 
-  security_group_binding = yandex_vpc_security_group.web-sg.id
-  direction              = "egress"
-  description            = "Разрешает исходящий http трафик"
-  protocol               = "TCP"
-  port                   = 80
-  v4_cidr_blocks         = ["0.0.0.0/0"]
+#   security_group_binding = yandex_vpc_security_group.web-sg.id
+#   direction              = "egress"
+#   description            = "Разрешает исходящий http трафик"
+#   protocol               = "TCP"
+#   port                   = 80
+#   v4_cidr_blocks         = ["0.0.0.0/0"]
 
-}
+# }
 # Разрешает http трафик для сайтов
 
 # Для zabbix
@@ -134,28 +134,28 @@ resource "yandex_vpc_security_group_rule" "wevb-zabbix-trapper-outbound" {
 
 #---------------------------------
 # Zabbix-agent
-resource "yandex_vpc_security_group_rule" "zabbix-agent-all" {
+# resource "yandex_vpc_security_group_rule" "zabbix-agent-all" {
 
-  security_group_binding = yandex_vpc_security_group.zabbix-sg.id
-  direction              = "ingress"
-  description            = "Входящий zabbix agent"
-  protocol               = "ANY"
-  from_port              = 0
-  to_port                = 65535
-  v4_cidr_blocks         = ["0.0.0.0/0"]
+#   security_group_binding = yandex_vpc_security_group.zabbix-sg.id
+#   direction              = "ingress"
+#   description            = "Входящий zabbix agent"
+#   protocol               = "ANY"
+#   from_port              = 0
+#   to_port                = 65535
+#   v4_cidr_blocks         = ["0.0.0.0/0"]
 
-}
-resource "yandex_vpc_security_group_rule" "zabbix-agent-all2" {
+# }
+# resource "yandex_vpc_security_group_rule" "zabbix-agent-all2" {
 
-  security_group_binding = yandex_vpc_security_group.zabbix-sg.id
-  direction              = "egress"
-  description            = "Входящий zabbix agent"
-  protocol               = "ANY"
-  from_port              = 0
-  to_port                = 65535
-  v4_cidr_blocks         = ["0.0.0.0/0"]
+#   security_group_binding = yandex_vpc_security_group.zabbix-sg.id
+#   direction              = "egress"
+#   description            = "Входящий zabbix agent"
+#   protocol               = "ANY"
+#   from_port              = 0
+#   to_port                = 65535
+#   v4_cidr_blocks         = ["0.0.0.0/0"]
 
-}
+# }
 resource "yandex_vpc_security_group_rule" "zabbix-agent-inbound" {
 
   security_group_binding = yandex_vpc_security_group.zabbix-sg.id
@@ -215,8 +215,7 @@ resource "yandex_vpc_security_group_rule" "kibana-outbound" {
   direction              = "egress"
   description            = "ALL egress"
   protocol               = "ANY"
-  from_port              = 0
-  to_port                = 65535
+  port = 5601
   v4_cidr_blocks         = ["0.0.0.0/0"]
 
 }
@@ -226,8 +225,7 @@ resource "yandex_vpc_security_group_rule" "kibana-inbound" {
   direction              = "ingress"
   description            = "ALL ingress"
   protocol               = "ANY"
-  from_port              = 0
-  to_port                = 65535
+  port = 5601
   v4_cidr_blocks         = ["0.0.0.0/0"]
 
 }
@@ -242,8 +240,7 @@ resource "yandex_vpc_security_group_rule" "elastic-outbound" {
   direction              = "egress"
   description            = "ALL egress"
   protocol               = "ANY"
-  from_port              = 0
-  to_port                = 65535
+  port = 9200
   v4_cidr_blocks         = ["0.0.0.0/0"]
 
 }
@@ -253,8 +250,27 @@ resource "yandex_vpc_security_group_rule" "elastic-intbound" {
   direction              = "ingress"
   description            = "ALL ingress"
   protocol               = "ANY"
-  from_port              = 0
-  to_port                = 65535
+  port = 9200
+  v4_cidr_blocks         = ["0.0.0.0/0"]
+
+}
+resource "yandex_vpc_security_group_rule" "elastic-outbound" {
+
+  security_group_binding = yandex_vpc_security_group.elc-sg.id
+  direction              = "egress"
+  description            = "ALL egress"
+  protocol               = "ANY"
+  port = 5601
+  v4_cidr_blocks         = ["0.0.0.0/0"]
+
+}
+resource "yandex_vpc_security_group_rule" "elastic-intbound" {
+
+  security_group_binding = yandex_vpc_security_group.elc-sg.id
+  direction              = "ingress"
+  description            = "ALL ingress"
+  protocol               = "ANY"
+  port = 5601
   v4_cidr_blocks         = ["0.0.0.0/0"]
 
 }

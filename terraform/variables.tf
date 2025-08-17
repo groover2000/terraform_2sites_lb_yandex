@@ -28,3 +28,4 @@ variable "bastion_memory" {
   type    = number
   default = 2048
 }
+

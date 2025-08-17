@@ -47,7 +47,7 @@
 
     - name: Проверка и настройка метода аутентификации в pg_hba.conf (IPv4) ## Без этого отвергает подключение к пользователю, надо включать md5 или я что-то не понял
       lineinfile:
-        path: "{{ pg_hba_file.files[0].path | default('/etc/postgresql/14/main/pg_hba.conf') }}"
+        path: "{{ pg_hba_file.files[0].path | default('/etc/postgresql/14/main/pg_hba.conf') }}" ## ИСправить на темплейт
         regexp: '^host\s+all\s+all\s+127\.0\.0\.1/32\s+.*'
         line: 'host    all             all             127.0.0.1/32            md5'
         backup: yes
@@ -55,7 +55,7 @@
 
     - name: Проверка и настройка метода аутентификации в pg_hba.conf (IPv6) ## за компанию верхнего
       lineinfile:
-        path: "{{ pg_hba_file.files[0].path | default('/etc/postgresql/14/main/pg_hba.conf') }}"
+        path: "{{ pg_hba_file.files[0].path | default('/etc/postgresql/14/main/pg_hba.conf') }}"  ## ИСправить на темплейт
         regexp: '^host\s+all\s+all\s+::1/128\s+.*'
         line: 'host    all             all             ::1/128                 md5'
         backup: yes

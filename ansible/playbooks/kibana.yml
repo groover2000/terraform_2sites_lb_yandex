@@ -16,8 +16,27 @@
         name: kibana
         state: present
 
+    - name: Сконфигурировать kibana.yml  ## Подключение к эластику
+      copy:
+        dest: /etc/kibana/kibana.yml
+        owner: root
+        group: kibana
+        mode: 0644
+        content: |
+          server.name: kibana
+          server.host: "0.0.0.0"
+          server.port: 5601
+          elasticsearch.hosts: ["http://{{ elasticsearch_host | default('localhost') }}:9200"]
+          monitoring.ui.container.elasticsearch.enabled: true
+      notify: restart kibana 
+
     - name: Включить и запустить сервис Kibana
       systemd:
         name: kibana
         state: started
         enabled: yes
+  handlers:
+    - name: restart kibana
+      systemd:
+        name: kibana
+        state: restarted

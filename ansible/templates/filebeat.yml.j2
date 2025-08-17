@@ -1,0 +1,23 @@
+filebeat.modules:
+  - module: nginx
+    access:
+      enabled: true
+      var.paths: ["{{ nginx_access_log | default('/var/log/nginx/access.log*') }}"]
+    error:
+      enabled: true
+      var.paths: ["{{ nginx_error_log | default('/var/log/nginx/error.log*') }}"]
+
+output.elasticsearch:
+  hosts: ["http://{{ elasticsearch_host | default('localhost') }}:9200"]
+
+setup.kibana:
+  host: "http://{{ kibana_host | default('localhost') }}:5601"
+
+setup.dashboards.enabled: true
+setup.template.settings:
+  index.number_of_shards: 1
+
+
+
+
+  

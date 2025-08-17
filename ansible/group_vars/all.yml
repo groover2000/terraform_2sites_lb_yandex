@@ -1,0 +1,4 @@
+# elasticsearch_host: "http://your.elasticsearch.local:9200"
+# kibana_host: "192.168.1.100"
+# elastic_user: "elastic"
+# elastic_password: "your_password"

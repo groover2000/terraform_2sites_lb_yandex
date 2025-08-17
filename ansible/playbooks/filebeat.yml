@@ -8,32 +8,34 @@
       apt_repository:
         repo: "deb [trusted=yes] https://mirror.yandex.ru/mirrors/elastic/8/ stable main" ## Пусть будет ключей, верим яндексу
         filename: "elactic-7-yandex"
-    - name: Обновить пакеты
-      apt:
         update_cache: yes
+    # - name: Обновить пакеты
+    #   apt:
+    #     update_cache: yes
         
     - name: Установить Filebeat
       apt:
         name: filebeat
         state: present
+   
+    - name: Включить модуль Nginx в Filebeat  ## Включает  модуль 
+      command: filebeat modules enable nginx
+      args:
+        creates: /etc/filebeat/modules.d/nginx.yml
+      register: module_enabled
+      changed_when: module_enabled.rc == 0
 
-    # - name: Настроить Filebeat для отправки в Elasticsearch
-    #   copy:
-    #     dest: /etc/filebeat/filebeat.yml
-    #     content: |
-    #       filebeat.inputs:
-    #       - type: log
-    #         paths:
-    #           - /var/log/*.log
-
-    #       output.elasticsearch:
-    #         hosts: ["https://{{ kibana_host }}:{{ elastic_port }}"]
-    #         username: elastic
-    #         password: "{{ lookup('file', elastic_password_file) }}"
-    #         ssl.certificate_authorities: ["{{ elastic_key }}"]
-
-    - name: Включить и запустить Filebeat
-      systemd:
+    - name: Скопировать конфигурацию filebeat.yml ## Настройки для подключения автоматом
+      template:
+          src: ../templates/filebeat.yml.j2
+          dest: /etc/filebeat/filebeat.yml
+          owner: root ##  не запускается  если не владелец рут
+          group: root
+          mode: 0644
+      notify: restart filebeat
+   
+  handlers:   ## Просто перезапуск
+    - name: restart filebeat
+      service:
         name: filebeat
-        state: started
-        enabled: yes
+        state: restarted
